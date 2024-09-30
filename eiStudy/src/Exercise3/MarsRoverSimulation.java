@@ -1,198 +1,191 @@
 package Exercise3;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-// Interface for Command Pattern
-interface Command {
-    void execute();
-}
 
 // Rover Class
 class Rover {
-    private int x, y;
-    private Direction direction;
-    private Grid grid;
+    private int x;
+    private int y;
+    String direction;
 
-    public Rover(int x, int y, Direction direction, Grid grid) {
+    public Rover(int x, int y, String direction) {
         this.x = x;
         this.y = y;
         this.direction = direction;
-        this.grid = grid;
     }
 
     public void moveForward() {
-        int newX = x + direction.getXStep();
-        int newY = y + direction.getYStep();
-        if (!grid.hasObstacle(newX, newY) && grid.isWithinBounds(newX, newY)) {
-            this.x = newX;
-            this.y = newY;
-        } else {
-            System.out.println("Obstacle detected or out of bounds!");
+        switch (direction) {
+            case "N":
+                y++;
+                break;
+            case "E":
+                x++;
+                break;
+            case "S":
+                y--;
+                break;
+            case "W":
+                x--;
+                break;
         }
     }
 
     public void turnLeft() {
-        this.direction = direction.left();
+        switch (direction) {
+            case "N":
+                direction = "W";
+                break;
+            case "E":
+                direction = "N";
+                break;
+            case "S":
+                direction = "E";
+                break;
+            case "W":
+                direction = "S";
+                break;
+        }
     }
 
     public void turnRight() {
-        this.direction = direction.right();
+        switch (direction) {
+            case "N":
+                direction = "E";
+                break;
+            case "E":
+                direction = "S";
+                break;
+            case "S":
+                direction = "W";
+                break;
+            case "W":
+                direction = "N";
+                break;
+        }
     }
 
     public String getStatus() {
-        return "Rover is at (" + x + ", " + y + ") facing " + direction;
+        return "Rover is at (" + x + ", " + y + ") facing " + direction + ".";
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
     }
 }
 
-// Enum for Directions
-enum Direction {
-    NORTH(0, 1), EAST(1, 0), SOUTH(0, -1), WEST(-1, 0);
+// Obstacle Class
+class Obstacle {
+    private int x;
+    private int y;
 
-    private int xStep, yStep;
-
-    Direction(int xStep, int yStep) {
-        this.xStep = xStep;
-        this.yStep = yStep;
-    }
-
-    public int getXStep() {
-        return xStep;
-    }
-
-    public int getYStep() {
-        return yStep;
-    }
-
-    public Direction left() {
-        switch (this) {
-            case NORTH: return WEST;
-            case WEST: return SOUTH;
-            case SOUTH: return EAST;
-            case EAST: return NORTH;
-            default: return this;
-        }
-    }
-
-    public Direction right() {
-        switch (this) {
-            case NORTH: return EAST;
-            case EAST: return SOUTH;
-            case SOUTH: return WEST;
-            case WEST: return NORTH;
-            default: return this;
-        }
-    }
-}
-
-// Command Implementations
-class MoveCommand implements Command {
-    private Rover rover;
-
-    public MoveCommand(Rover rover) {
-        this.rover = rover;
-    }
-
-    @Override
-    public void execute() {
-        rover.moveForward();
-    }
-}
-
-class TurnLeftCommand implements Command {
-    private Rover rover;
-
-    public TurnLeftCommand(Rover rover) {
-        this.rover = rover;
-    }
-
-    @Override
-    public void execute() {
-        rover.turnLeft();
-    }
-}
-
-class TurnRightCommand implements Command {
-    private Rover rover;
-
-    public TurnRightCommand(Rover rover) {
-        this.rover = rover;
-    }
-
-    @Override
-    public void execute() {
-        rover.turnRight();
-    }
-}
-
-// Composite Pattern for Grid
-class Grid {
-    private int width, height;
-    private Set<Point> obstacles;
-
-    public Grid(int width, int height) {
-        this.width = width;
-        this.height = height;
-        this.obstacles = new HashSet<>();
-    }
-
-    public void addObstacle(int x, int y) {
-        obstacles.add(new Point(x, y));
-    }
-
-    public boolean hasObstacle(int x, int y) {
-        return obstacles.contains(new Point(x, y));
-    }
-
-    public boolean isWithinBounds(int x, int y) {
-        return x >= 0 && x < width && y >= 0 && y < height;
-    }
-}
-
-// Point Class to Represent Obstacles
-class Point {
-    private int x, y;
-
-    public Point(int x, int y) {
+    public Obstacle(int x, int y) {
         this.x = x;
         this.y = y;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Point point = (Point) o;
-        return x == point.x && y == point.y;
+    public int getX() {
+        return x;
     }
 
-    @Override
-    public int hashCode() {
-        return 31 * x + y;
+    public int getY() {
+        return y;
     }
 }
 
-// Main Class
+// Main Class to run the simulation
 public class MarsRoverSimulation {
+    private static final int GRID_SIZE = 10; // Grid size set to 10x10
+    private static List<Obstacle> obstacles = new ArrayList<>();
+
     public static void main(String[] args) {
-        Grid grid = new Grid(10, 10);
-        grid.addObstacle(2, 2);  // Adding obstacles
-        grid.addObstacle(3, 5);
+        Scanner scanner = new Scanner(System.in);
 
-        Rover rover = new Rover(0, 0, Direction.NORTH, grid);
+        // Get starting position and direction
+        System.out.print("Enter grid width and height (e.g., 10 10): ");
+        int gridWidth = scanner.nextInt();
+        int gridHeight = scanner.nextInt();
 
-        // Defining commands
-        Command move = new MoveCommand(rover);
-        Command turnLeft = new TurnLeftCommand(rover);
-        Command turnRight = new TurnRightCommand(rover);
+        System.out.print("Enter Rover's starting x, y coordinates and direction (N, E, S, W): ");
+        int startX = scanner.nextInt();
+        int startY = scanner.nextInt();
+        String startDirection = scanner.next();
 
-        // Executing commands
-        move.execute();
-        move.execute();
-        turnRight.execute();
-        move.execute();
-        turnLeft.execute();
-        move.execute();
+        // Get obstacles
+        System.out.print("Enter number of obstacles: ");
+        int obstacleCount = scanner.nextInt();
+        for (int i = 0; i < obstacleCount; i++) {
+            System.out.print("Enter obstacle position (x y): ");
+            int obstacleX = scanner.nextInt();
+            int obstacleY = scanner.nextInt();
+            obstacles.add(new Obstacle(obstacleX, obstacleY));
+        }
 
-        System.out.println(rover.getStatus());  // Output: Rover is at (1, 3) facing EAST
+        Rover rover = new Rover(startX, startY, startDirection);
+
+        // Get commands
+        System.out.print("Enter commands (M for move, L for turn left, R for turn right): ");
+        String commands = scanner.next();
+
+        // Execute commands
+        for (char command : commands.toCharArray()) {
+            switch (command) {
+                case 'M':
+                    if (canMove(rover, gridWidth, gridHeight)) {
+                        rover.moveForward();
+                    } else {
+                        System.out.println("Obstacle detected! Cannot move.");
+                    }
+                    break;
+                case 'L':
+                    rover.turnLeft();
+                    break;
+                case 'R':
+                    rover.turnRight();
+                    break;
+            }
+        }
+
+        System.out.println(rover.getStatus());
+        scanner.close();
+    }
+
+    private static boolean canMove(Rover rover, int gridWidth, int gridHeight) {
+        int nextX = rover.getX();
+        int nextY = rover.getY();
+
+        // Check next position based on direction
+        switch (rover.direction) {
+            case "N":
+                nextY++;
+                break;
+            case "E":
+                nextX++;
+                break;
+            case "S":
+                nextY--;
+                break;
+            case "W":
+                nextX--;
+                break;
+        }
+
+        // Check if the next position is within grid boundaries
+        if (nextX < 0 || nextX >= gridWidth || nextY < 0 || nextY >= gridHeight) {
+            return false; // Out of bounds
+        }
+
+        // Check for obstacles
+        for (Obstacle obstacle : obstacles) {
+            if (obstacle.getX() == nextX && obstacle.getY() == nextY) {
+                return false; // Obstacle detected
+            }
+        }
+
+        return true;
     }
 }
